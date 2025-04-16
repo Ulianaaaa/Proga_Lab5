@@ -1,0 +1,5 @@
+info
+show
+help
+executescript
+script2.txt
