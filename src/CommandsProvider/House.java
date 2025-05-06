@@ -1,11 +1,10 @@
 package CommandsProvider;
 
 public class House {
-    private String name; // Поле не может быть null
-    private Long year; // Максимальное значение поля: 197, Значение поля должно быть больше 0
-    private long numberOfFlatsOnFloor; // Значение поля должно быть больше 0
+    private String name;
+    private Long year;
+    private long numberOfFlatsOnFloor;
 
-    // Конструктор, принимающий name, year, и numberOfFlatsOnFloor
     public House(String name, Long year, long numberOfFlatsOnFloor) {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Имя дома не может быть null или пустым");
@@ -16,13 +15,10 @@ public class House {
         if (numberOfFlatsOnFloor <= 0) {
             throw new IllegalArgumentException("Количество квартир на этаже должно быть больше 0");
         }
-
         this.name = name;
         this.year = year;
         this.numberOfFlatsOnFloor = numberOfFlatsOnFloor;
     }
-
-    // Геттеры и сеттеры для полей
 
     public String getName() {
         return name;
@@ -55,5 +51,10 @@ public class House {
             throw new IllegalArgumentException("Количество квартир на этаже должно быть больше 0");
         }
         this.numberOfFlatsOnFloor = numberOfFlatsOnFloor;
+    }
+
+    @Override
+    public String toString() {
+        return "House{name='" + name + "', year=" + year + ", flatsOnFloor=" + numberOfFlatsOnFloor + "}";
     }
 }

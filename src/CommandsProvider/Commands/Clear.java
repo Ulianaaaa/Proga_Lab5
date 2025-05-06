@@ -14,7 +14,7 @@ public class Clear implements Command {
     }
 
     @Override
-    public void execute() {
+    public void execute(String args) {
         collectionManager.clearFlats();
         System.out.println("Коллекция очищена.");
     }

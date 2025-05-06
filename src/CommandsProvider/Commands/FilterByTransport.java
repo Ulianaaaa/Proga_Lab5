@@ -19,7 +19,7 @@ public class FilterByTransport implements Command {
     }
 
     @Override
-    public void execute() {
+    public void execute(String args) {
         // Запрашиваем у пользователя тип транспорта
         System.out.print("Введите тип транспорта (FEW, NONE, ENOUGH): ");
         String transportInput = scanner.nextLine().trim();
@@ -32,7 +32,7 @@ public class FilterByTransport implements Command {
 
         try {
             // Преобразуем введенное значение в перечисление Transport
-            Transport transport = Transport.valueOf(transportInput);
+            Transport transport = Transport.valueOf(transportInput.toUpperCase());
 
             // Фильтруем объекты Flat по выбранному типу транспорта
             List<Flat> filteredFlats = collectionManager.getFlats().stream()

@@ -25,7 +25,7 @@ public class Add implements Command {
      * Выполняет команду добавления нового элемента
      */
     @Override
-    public void execute() {
+    public void execute(String args) {
         try {
             System.out.println("\n=== Добавление новой квартиры ===");
             Flat newFlat = flatBuilder.buildFlat();
@@ -42,6 +42,6 @@ public class Add implements Command {
      */
     @Override
     public String getDescription() {
-        return "add - добавить новый объект Flat в коллекцию";
+        return " добавить новый объект Flat в коллекцию";
     }
 }

@@ -3,19 +3,32 @@ import CommandsProvider.CommandManager;
 import CommandsProvider.Flat;
 import Data.DataProvider;
 
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
 import java.io.File;
 import java.util.Scanner;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Главный класс приложения для управления коллекцией объектов Flat
  */
 public class Main {
-    /**
-     * Точка входа в приложение
-     * @param args аргументы командной строки (первый аргумент - имя файла с коллекцией)
-     */
+    private static final AtomicBoolean running = new AtomicBoolean(true);
+
     public static void main(String[] args) {
+        // Установка обработчика для SIGINT (Command+C на Mac, Ctrl+C на других ОС)
+        try {
+            Signal.handle(new Signal("INT"), signal -> {
+                System.out.println("\nПолучен сигнал завершения (Command+C/Ctrl+C)");
+                running.set(false);
+                System.exit(0); // Немедленный выход
+            });
+        } catch (IllegalArgumentException e) {
+            System.err.println("WARN: Не удалось зарегистрировать обработчик сигналов (работает только в Oracle JDK)");
+        }
+
         if (args.length < 1) {
             System.out.println("Ошибка: укажите имя файла с коллекцией как аргумент командной строки.");
             System.exit(1);
@@ -33,8 +46,7 @@ public class Main {
         // Создаём файл, если он не существует
         if (!file.exists()) {
             try {
-                boolean created = file.createNewFile();
-                if (created) {
+                if (file.createNewFile()) {
                     System.out.println("Файл не найден. Создан новый файл: " + fileName);
                 }
             } catch (Exception e) {
@@ -49,13 +61,32 @@ public class Main {
         CommandManager commandManager = new CommandManager(collectionManager, dataProvider, fileName);
 
         System.out.println("Добро пожаловать! Введите 'help' для просмотра доступных команд.");
+        System.out.println("Для выхода используйте Command+C (Mac) или Ctrl+D");
 
         Scanner scanner = new Scanner(System.in);
-        while (true) {
-            String input = scanner.nextLine().trim();
-            if (!input.isEmpty()) {
-                commandManager.executeCommand(input);
+        while (running.get()) {
+            try {
+                System.out.print("> "); // Приглашение для ввода
+                if (!scanner.hasNextLine()) {
+                    // Обработка Ctrl+D (EOF)
+                    System.out.println("\nОбнаружен конец ввода (Ctrl+D). Завершение работы...");
+                    break;
+                }
+
+                String input = scanner.nextLine().trim();
+                if (input.equalsIgnoreCase("exit")) {
+                    break;
+                }
+                if (!input.isEmpty()) {
+                    commandManager.executeCommand(input);
+                }
+            } catch (Exception e) {
+                System.out.println("Ошибка: " + e.getMessage());
             }
         }
+
+        // Корректное завершение
+        System.out.println("Работа программы завершена.");
+        System.exit(0);
     }
 }

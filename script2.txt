@@ -1,5 +1,4 @@
-executescript
-script.txt
+execute_script script.txt
 info
 info
 info

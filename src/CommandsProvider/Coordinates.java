@@ -1,10 +1,9 @@
 package CommandsProvider;
 
 public class Coordinates {
-    private double x; // Значение поля должно быть больше -349
-    private Long y;   // Поле не может быть null
+    private double x;
+    private Long y;
 
-    // Конструктор, принимающий x и y
     public Coordinates(double x, Long y) {
         if (x <= -349) {
             throw new IllegalArgumentException("Значение x не может быть меньше или равно -349");
@@ -16,7 +15,6 @@ public class Coordinates {
         this.y = y;
     }
 
-    // Геттеры и сеттеры
     public double getX() {
         return x;
     }
@@ -37,5 +35,10 @@ public class Coordinates {
             throw new IllegalArgumentException("Значение y не может быть null");
         }
         this.y = y;
+    }
+
+    @Override
+    public String toString() {
+        return "(" + x + ", " + y + ")";
     }
 }

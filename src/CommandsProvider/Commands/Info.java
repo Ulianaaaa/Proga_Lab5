@@ -15,7 +15,7 @@ public class Info implements Command {
     }
 
     @Override
-    public void execute() {
+    public void execute(String args) {
         System.out.println("Информация о коллекции:");
         System.out.println("Тип: " + collectionManager.getFlats().getClass().getName());
         //getFlats возвращает коллекцию объектов Flat которая хранится в CollectionManager

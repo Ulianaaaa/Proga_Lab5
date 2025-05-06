@@ -17,7 +17,7 @@ public class NumberOfRooms  implements Command {
     }
 
     @Override
-    public void execute() {
+    public void execute(String args) {
         // Запрашиваем количество комнат
         System.out.print("Введите количество комнат: ");
         long numberOfRooms;

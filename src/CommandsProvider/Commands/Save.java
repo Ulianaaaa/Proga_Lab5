@@ -19,7 +19,7 @@ public class Save implements Command {
     }
 
     @Override
-    public void execute() {
+    public void execute(String args) {
         dataProvider.save(collectionManager.getFlats(), fileName);
     }
 

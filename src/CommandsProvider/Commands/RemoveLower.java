@@ -17,7 +17,7 @@ public class RemoveLower implements Command {
     }
 
     @Override
-    public void execute() {
+    public void execute(String args) {
         try {
             System.out.println("\n=== Удаление элементов, меньших заданного (по площади) ===");
 

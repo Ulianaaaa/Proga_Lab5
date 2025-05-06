@@ -10,7 +10,7 @@ import java.util.Scanner;
  */
 public class RemoveById implements Command {
     private final CollectionManager collectionManager;
-    private final java.util.Scanner scanner;
+    private final Scanner scanner;
 
     public RemoveById(CollectionManager collectionManager, Scanner scanner) {
         this.collectionManager = collectionManager;
@@ -18,10 +18,14 @@ public class RemoveById implements Command {
     }
 
     @Override
-    public void execute() {
-        System.out.print("Введите id: ");
+    public void execute(String args) {
+        if (args == null || args.trim().isEmpty()) {
+            System.out.println("Ошибка: необходимо указать id. Пример: remove_by_id 3");
+            return;
+        }
+
         try {
-            int id = Integer.parseInt(scanner.nextLine().trim());
+            int id = Integer.parseInt(args.trim()); // используем переданный аргумент
             boolean removed = collectionManager.removeById(id);
             if (removed) {
                 System.out.println("Элемент с id " + id + " удалён.");

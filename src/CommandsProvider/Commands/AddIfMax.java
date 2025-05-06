@@ -24,7 +24,7 @@ public class AddIfMax implements Command {
     }
 
     @Override
-    public void execute() {
+    public void execute(String args) {
         try {
             System.out.println("\n=== Добавление элемента, если он больше максимального (по площади) ===");
 

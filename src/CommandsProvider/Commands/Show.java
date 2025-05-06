@@ -17,7 +17,7 @@ public class Show implements Command {
     }
 
     @Override
-    public void execute() {
+    public void execute(String args) {
         TreeSet<Flat> flats = collectionManager.getFlats();
         if (flats.isEmpty()) {
             System.out.println("Коллекция пуста.");

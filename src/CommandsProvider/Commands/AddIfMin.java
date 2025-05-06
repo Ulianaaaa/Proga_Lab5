@@ -24,7 +24,7 @@ public class AddIfMin implements Command {
     }
 
     @Override
-    public void execute() {
+    public void execute(String args) {
         try {
             System.out.println("\n=== Добавление элемента, если он меньше минимального (по площади) ===");
 

@@ -17,7 +17,7 @@ public class FlatBuilder {
         System.out.println("Введите название квартиры:");
         String name = readNonEmptyString();
 
-        System.out.println("Введите координаты:");
+        System.out.println("Введите координату х: (она должно быть больше -349)");
         double x = readDoubleGreaterThan("-349");
         Long y = readLong("Введите значение y (не может быть null):");
         Coordinates coordinates = new Coordinates(x, y);
@@ -55,7 +55,7 @@ public class FlatBuilder {
     }
 
     // Остальные методы остаются без изменений
-    private String readNonEmptyString() {
+    public String readNonEmptyString() {
         String input;
         while (true) {
             input = scanner.nextLine();
@@ -67,7 +67,7 @@ public class FlatBuilder {
         }
     }
 
-    private double readDoubleGreaterThan(String minValue) {
+    public double readDoubleGreaterThan(String minValue) {
         double input;
         while (true) {
             try {
@@ -83,7 +83,7 @@ public class FlatBuilder {
         }
     }
 
-    private Long readLong(String prompt) {
+    public Long readLong(String prompt) {
         Long input = null;
         while (input == null) {
             System.out.println(prompt);
@@ -96,7 +96,7 @@ public class FlatBuilder {
         return input;
     }
 
-    private Long readLongGreaterThan(long minValue) {
+    public Long readLongGreaterThan(long minValue) {
         long input;
         while (true) {
             try {
@@ -112,7 +112,7 @@ public class FlatBuilder {
         }
     }
 
-    private long readLongInRange(long minValue, long maxValue) {
+    public long readLongInRange(long minValue, long maxValue) {
         long input;
         while (true) {
             try {
@@ -128,7 +128,7 @@ public class FlatBuilder {
         }
     }
 
-    private <T extends Enum<T>> T readEnum(Class<T> enumClass) {
+    public  <T extends Enum<T>> T readEnum(Class<T> enumClass) {
         T result = null;
         while (result == null) {
             String input = scanner.nextLine().toUpperCase();
@@ -144,7 +144,7 @@ public class FlatBuilder {
         return result;
     }
 
-    private <T extends Enum<T>> T readOptionalEnum(Class<T> enumClass) {
+    public  <T extends Enum<T>> T readOptionalEnum(Class<T> enumClass) {
         T result = null;
         String input = scanner.nextLine().toUpperCase();
         if (!input.isEmpty()) {

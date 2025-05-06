@@ -16,7 +16,7 @@ public class MinByFurnish implements Command {
     }
 
     @Override
-    public void execute() {
+    public void execute(String args) {
         // Используем метод min с компаратором, чтобы найти объект с минимальной отделкой
         Optional<Flat> minFlat = collectionManager.getFlats().stream()
                 .min(Comparator.comparing(Flat::getFurnish));

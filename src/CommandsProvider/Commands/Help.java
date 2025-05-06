@@ -14,7 +14,7 @@ public class Help implements Command {
     }
 
     @Override
-    public void execute() {
+    public void execute(String args) {
         System.out.println("Доступные команды");
         for (Map.Entry<String, Command> entry : commandManager.getCommands().entrySet()){
             // через for перебираем элементы коллекции

@@ -1,8 +1,7 @@
 package CommandsProvider.Commands;
 
-import CommandsProvider.Command;
-import CommandsProvider.CollectionManager;
 import CommandsProvider.*;
+
 import java.util.Scanner;
 
 /**
@@ -11,92 +10,77 @@ import java.util.Scanner;
 public class UpdateById implements Command {
     private final CollectionManager collectionManager;
     private final Scanner scanner;
+    private final FlatBuilder flatBuilder;
 
-    /**
-     * Конструктор команды UpdateById
-     * @param collectionManager менеджер коллекции
-     * @param scanner сканер для ввода данных
-     */
     public UpdateById(CollectionManager collectionManager, Scanner scanner) {
         this.collectionManager = collectionManager;
         this.scanner = scanner;
+        this.flatBuilder = new FlatBuilder(scanner, collectionManager);
     }
 
-    /**
-     * Выполняет обновление элемента по id
-     */
     @Override
-    public void execute() {
-        System.out.print("Введите id элемента для обновления: ");
-        try {
-            int id = Integer.parseInt(scanner.nextLine().trim());
-            Flat flatToUpdate = null;
+    public void execute(String args) {
+        if (args == null || args.trim().isEmpty()) {
+            System.out.println("Ошибка: необходимо указать id. Пример: update 4");
+            return;
+        }
 
-            // Поиск элемента по id
-            for (Flat flat : collectionManager.getFlats()) {
-                if (flat.getId() == id) {
-                    flatToUpdate = flat;
-                    break;
-                }
-            }
+        try {
+            int id = Integer.parseInt(args.trim()); // теперь мы используем args!
+            Flat flatToUpdate = collectionManager.getFlats().stream()
+                    .filter(f -> f.getId() == id)
+                    .findFirst()
+                    .orElse(null);
 
             if (flatToUpdate != null) {
-                System.out.println("Элемент с id " + id + " найден. Обновите его данные.");
+                System.out.println("Элемент с id " + id + " найден. Введите новые значения:");
 
-                // Обновление всех полей
-                System.out.print("Введите новое имя квартиры: ");
-                flatToUpdate.setName(scanner.nextLine());
+                System.out.println("Введите новое название квартиры:");
+                flatToUpdate.setName(flatBuilder.readNonEmptyString());
 
-                System.out.print("Введите координату x (должна быть > -349): ");
-                double x = Double.parseDouble(scanner.nextLine());
-                System.out.print("Введите координату y: ");
-                long y = Long.parseLong(scanner.nextLine());
+                System.out.println("Введите координату x (она должно быть больше -349):");
+                double x = flatBuilder.readDoubleGreaterThan("-349");
+
+                Long y = flatBuilder.readLong("Введите значение y (не может быть null):");
                 flatToUpdate.setCoordinates(new Coordinates(x, y));
 
-                System.out.print("Введите новую площадь квартиры (должна быть > 0): ");
-                flatToUpdate.setArea(Long.parseLong(scanner.nextLine()));
+                System.out.println("Введите площадь квартиры (должна быть больше 0):");
+                flatToUpdate.setArea(flatBuilder.readLongGreaterThan(0));
 
-                System.out.print("Введите новое количество комнат (1-8): ");
-                flatToUpdate.setNumberOfRooms(Long.parseLong(scanner.nextLine()));
+                System.out.println("Введите количество комнат (должно быть больше 0 и меньше 9):");
+                flatToUpdate.setNumberOfRooms(flatBuilder.readLongInRange(1, 8));
 
-                System.out.println("Выберите вариант отделки (DESIGNER, NONE, BAD, LITTLE): ");
-                flatToUpdate.setFurnish(Furnish.valueOf(scanner.nextLine().toUpperCase()));
+                System.out.println("Выберите вариант отделки (DESIGNER, NONE, BAD, LITTLE):");
+                flatToUpdate.setFurnish(flatBuilder.readEnum(Furnish.class));
 
-                System.out.println("Выберите вид из окна (STREET, YARD, NORMAL): ");
-                flatToUpdate.setView(View.valueOf(scanner.nextLine().toUpperCase()));
+                System.out.println("Выберите вид из окна (STREET, YARD, NORMAL):");
+                flatToUpdate.setView(flatBuilder.readEnum(View.class));
 
-                System.out.println("Введите транспорт (FEW, NONE, ENOUGH) или оставьте пустым: ");
-                String transportInput = scanner.nextLine();
-                flatToUpdate.setTransport(transportInput.isEmpty() ? null :
-                        Transport.valueOf(transportInput.toUpperCase()));
+                System.out.println("Введите транспорт (FEW, NONE, ENOUGH) или оставьте поле пустым:");
+                flatToUpdate.setTransport(flatBuilder.readOptionalEnum(Transport.class));
 
-                System.out.println("Введите название дома (оставьте пустым, если нет): ");
+                System.out.println("Введите название дома (можно оставить пустым):");
                 String houseName = scanner.nextLine();
                 if (!houseName.isEmpty()) {
-                    System.out.println("Введите год постройки дома (1-197): ");
-                    Long year = Long.parseLong(scanner.nextLine());
-                    System.out.println("Введите количество квартир на этаже (>0): ");
-                    long flatsOnFloor = Long.parseLong(scanner.nextLine());
+                    System.out.println("Введите год постройки дома (должен быть больше 0 и меньше 197):");
+                    Long year = flatBuilder.readLongInRange(1, 197);
+                    System.out.println("Введите количество квартир на этаже: ");
+                    long flatsOnFloor = flatBuilder.readLongGreaterThan(0);
                     flatToUpdate.setHouse(new House(houseName, year, flatsOnFloor));
                 } else {
                     flatToUpdate.setHouse(null);
                 }
 
-                System.out.println("Элемент с id " + id + " был обновлён.");
+                System.out.println("Элемент успешно обновлён.");
             } else {
                 System.out.println("Элемент с таким id не найден.");
             }
+
         } catch (NumberFormatException e) {
-            System.out.println("Ошибка: введены неверные данные.");
-        } catch (IllegalArgumentException e) {
-            System.out.println("Ошибка: " + e.getMessage());
+            System.out.println("Ошибка: id должен быть числом.");
         }
     }
 
-    /**
-     * Возвращает описание команды
-     * @return описание команды
-     */
     @Override
     public String getDescription() {
         return " обновить элемент в коллекции по его id";
