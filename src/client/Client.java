@@ -1,6 +1,7 @@
 package client;
 
 import common.network.CommandRequest;
+import common.network.CommandResponse;
 
 import java.io.*;
 import java.net.*;
@@ -49,8 +50,8 @@ public class Client {
                 // десериализация ответа
                 ByteArrayInputStream byteIn = new ByteArrayInputStream(responsePacket.getData());
                 ObjectInputStream in = new ObjectInputStream(byteIn);
-                Object responseObj = in.readObject();
-                System.out.println("Ответ от сервера: " + responseObj);
+                CommandResponse response = (CommandResponse) in.readObject();
+                System.out.println("Ответ от сервера: " + response.getResponseText());
 
             }
         } catch (Exception e) {
