@@ -22,18 +22,39 @@ public class CollectionManager {
         loadFromFile(fileName);
     }
 
-    public boolean addFlat(Flat flat){
-        return flats.add(flat);
-    }
-    public boolean removeById(long id){
-        return flats.removeIf(flat -> flat.getId()==id);
+    public int generateNewId(){
+        return flats.isEmpty() ? 1 :
+                flats.last().getId() + 1;
     }
 
-    public void clearFlats(){
+    // NEW: добавлен метод для добавления квартиры с генерацией ID
+    public boolean addFlat(Flat flat) {
+        if (flat == null) return false;
+
+        // Генерация ID если нужно
+        if (flat.getId() <= 0) {
+            int newId = flats.isEmpty()
+                    ? 1
+                    : flats.last().getId() + 1;
+            flat.setId(newId);
+        }
+
+        // Установка даты создания
+        flat.setCreationDate(LocalDateTime.now());
+
+        return flats.add(flat);
+    }
+
+    // ... остальные методы остаются без изменений ...
+    public boolean removeById(long id) {
+        return flats.removeIf(flat -> flat.getId() == id);
+    }
+
+    public void clearFlats() {
         flats.clear();
     }
 
-    public LocalDateTime getInitializationDate(){
+    public LocalDateTime getInitializationDate() {
         return initializationDate;
     }
 
@@ -61,8 +82,7 @@ public class CollectionManager {
     }
 
     private Flat parseCSVLine(String line) throws Exception {
-        String[] tokens = line.split(",", -1); // -1 сохраняет пустые значения
-
+        String[] tokens = line.split(",", -1);
         if (tokens.length < 13) {
             throw new IllegalArgumentException("Ожидается минимум 13 полей, получено: " + tokens.length);
         }

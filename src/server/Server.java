@@ -3,7 +3,8 @@ package server;
 import common.commands.Command;
 import common.network.CommandRequest;
 import common.network.CommandResponse;
-import common.models.Flat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.*;
@@ -11,47 +12,41 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.time.LocalDateTime;  // Добавьте этот импорт
+import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.Scanner;
-import java.util.TreeSet;
 
 public class Server {
-    private static final int PORT = 5000;
-    private String fileName;
+    private static final Logger logger = LoggerFactory.getLogger(Server.class);
 
-    // Конструктор для передачи пути к файлу
+    private static final int PORT = 5000;
+    private final String fileName;
+    private DatagramChannel channel;
+    private Selector selector;
+    private CommandManager commandManager;
+
     public Server(String fileName) {
         this.fileName = fileName;
     }
 
     public void start() {
         try {
-            // Настройка канала
-            DatagramChannel channel = DatagramChannel.open();
-            channel.bind(new InetSocketAddress(PORT));
+            channel = DatagramChannel.open();
             channel.configureBlocking(false);
-
-            Selector selector = Selector.open();
+            channel.bind(new InetSocketAddress(PORT));
+            selector = Selector.open();
             channel.register(selector, SelectionKey.OP_READ);
 
-            System.out.println("Сервер запущен на порту " + PORT);
-
-            // Буфер для приёма данных
-            ByteBuffer buffer = ByteBuffer.allocate(4096);
-
-            // Инициализация компонентов
             DataProvider dataProvider = new DataProvider();
-
-            // Получаем текущую дату для инициализации
-            LocalDateTime initializationDate = LocalDateTime.now();
-
-            // Передаем инициализационную дату в CollectionManager
-            CollectionManager collectionManager = new CollectionManager(dataProvider, fileName, initializationDate);
+            CollectionManager collectionManager = new CollectionManager(
+                    dataProvider, fileName, LocalDateTime.now()
+            );
             Scanner scanner = new Scanner(System.in);
-            CommandManager commandManager = new CommandManager(collectionManager, dataProvider, fileName, scanner);
+            this.commandManager = new CommandManager(collectionManager, dataProvider, fileName, scanner);
 
-            // Основной цикл
+            logger.info("Сервер запущен на порту {}", PORT);
+
+            ByteBuffer buffer = ByteBuffer.allocate(65536);
             while (true) {
                 selector.select();
                 Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
@@ -61,45 +56,88 @@ public class Server {
                     keys.remove();
 
                     if (key.isReadable()) {
-                        buffer.clear();
-                        SocketAddress clientAddress = channel.receive(buffer);
-
-                        if (clientAddress != null) {
-                            buffer.flip();
-
-                            ByteArrayInputStream byteIn = new ByteArrayInputStream(buffer.array(), 0, buffer.limit());
-                            ObjectInputStream in = new ObjectInputStream(byteIn);
-                            CommandRequest request = (CommandRequest) in.readObject();
-
-                            System.out.println("Получена команда: " + request.getCommandName());
-
-                            Command command = commandManager.getCommand(request.getCommandName());
-                            String result;
-                            if (command != null) {
-                                result = command.execute(request.getArgument());
-                            } else {
-                                result = "Команда не найдена: " + request.getCommandName();
-                            }
-
-                            CommandResponse response = new CommandResponse(result);
-
-                            ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-                            ObjectOutputStream out = new ObjectOutputStream(byteOut);
-                            out.writeObject(response);
-                            byte[] responseBytes = byteOut.toByteArray();
-
-                            ByteBuffer responseBuffer = ByteBuffer.wrap(responseBytes);
-                            channel.send(responseBuffer, clientAddress);
-
-                            System.out.println("Ответ отправлен клиенту.");
-                        }
+                        handleClientRequest(buffer);
                     }
                 }
             }
-
         } catch (Exception e) {
-            System.err.println("Ошибка сервера: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Ошибка сервера: {}", e.getMessage(), e);
+        } finally {
+            closeResources();
         }
+    }
+
+    private void handleClientRequest(ByteBuffer buffer) {
+        buffer.clear();
+        try {
+            SocketAddress clientAddress = channel.receive(buffer);
+            if (clientAddress != null) {
+                buffer.flip();
+                CommandRequest request = deserializeRequest(buffer);
+
+                logger.info("Получена команда: {} от клиента {}", request.getCommandName(), clientAddress);
+
+                String response = processCommand(request);
+                sendResponse(response, clientAddress);
+                logger.info("Ответ отправлен клиенту {}", clientAddress);
+            }
+        } catch (Exception e) {
+            logger.error("Ошибка обработки запроса: {}", e.getMessage(), e);
+        }
+    }
+
+    private CommandRequest deserializeRequest(ByteBuffer buffer)
+            throws IOException, ClassNotFoundException {
+        try (ByteArrayInputStream byteIn = new ByteArrayInputStream(buffer.array(), 0, buffer.limit());
+             ObjectInputStream in = new ObjectInputStream(byteIn)) {
+            return (CommandRequest) in.readObject();
+        }
+    }
+
+    private String processCommand(CommandRequest request) {
+        try {
+            String commandName = request.getCommandName();
+            Object argument = request.getArgument();
+
+            Command command = commandManager.getCommands().get(commandName);
+            if (command == null) {
+                logger.warn("Получена неизвестная команда: {}", commandName);
+                return "Неизвестная команда: " + commandName;
+            }
+
+            return command.execute(argument);
+        } catch (Exception e) {
+            logger.error("Ошибка выполнения команды: {}", e.getMessage(), e);
+            return "Ошибка выполнения команды: " + e.getMessage();
+        }
+    }
+    private void sendResponse(String responseText, SocketAddress clientAddress) throws IOException {
+        CommandResponse response = new CommandResponse(responseText);
+        try (ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+             ObjectOutputStream out = new ObjectOutputStream(byteOut)) {
+
+            out.writeObject(response);
+            byte[] responseBytes = byteOut.toByteArray();
+            ByteBuffer responseBuffer = ByteBuffer.wrap(responseBytes);
+            channel.send(responseBuffer, clientAddress);
+        }
+    }
+
+    private void closeResources() {
+        try {
+            if (selector != null) selector.close();
+            if (channel != null) channel.close();
+            logger.info("Сервер завершил работу.");
+        } catch (IOException e) {
+            logger.error("Ошибка при закрытии ресурсов: {}", e.getMessage(), e);
+        }
+    }
+
+    public static void main(String[] args) {
+        if (args.length < 1) {
+            System.out.println("Укажите путь к файлу данных как аргумент командной строки");
+            return;
+        }
+        new Server(args[0]).start();
     }
 }

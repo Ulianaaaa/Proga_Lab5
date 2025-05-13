@@ -1,11 +1,13 @@
 package common.models;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
 
 public class Flat implements Serializable, Comparable<Flat> {
-    private static final long serialVersionID = 1L;
+    @Serial
+    private static final long serialVersionUID = 1L;
     private int id; // Значение поля должно быть больше 0, Значение этого поля должно быть уникальным, Значение этого поля должно генерироваться автоматически
     private String name; // Поле не может быть null, Строка не может быть пустой
     private Coordinates coordinates; // Поле не может быть null

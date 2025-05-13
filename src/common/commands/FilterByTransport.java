@@ -16,37 +16,38 @@ public class FilterByTransport implements Command {
 
     @Override
     public String execute(Object argument) {
-        if (argument == null || !(argument instanceof String)) {
-            return "Ошибка: необходимо передать строковой аргумент типа транспорта (FEW, NONE, ENOUGH).";
+        if (argument == null || argument.toString().trim().isEmpty()) {
+            return "Ошибка: необходимо указать тип транспорта (FEW, NONE, ENOUGH)";
         }
 
-        String transportInput = ((String) argument).trim().toUpperCase();
-
-        if (transportInput.isEmpty()) {
-            return "Ошибка: поле не может быть пустым.";
-        }
+        String transportInput = argument.toString().trim().toUpperCase();
 
         try {
             Transport transport = Transport.valueOf(transportInput);
 
             List<Flat> filteredFlats = collectionManager.getFlats().stream()
-                    .filter(flat -> transport.equals(flat.getTransport()))
+                    .filter(flat -> flat.getTransport() == transport)
                     .collect(Collectors.toList());
 
             if (filteredFlats.isEmpty()) {
-                return "Нет квартир с указанным типом транспорта.";
-            } else {
-                StringBuilder result = new StringBuilder("Квартиры с типом транспорта " + transport + ":\n");
-                filteredFlats.forEach(flat -> result.append(flat).append("\n"));
-                return result.toString();
+                return "Нет квартир с указанным типом транспорта: " + transport;
             }
+
+            StringBuilder result = new StringBuilder();
+            result.append("Найдено ").append(filteredFlats.size())
+                    .append(" квартир с транспортом ").append(transport).append(":\n");
+
+            filteredFlats.forEach(flat -> result.append(flat).append("\n"));
+            return result.toString();
+
         } catch (IllegalArgumentException e) {
-            return "Ошибка: введен неправильный тип транспорта. Возможные значения: FEW, NONE, ENOUGH.";
+            return "Ошибка: '" + transportInput + "' не является допустимым типом транспорта. " +
+                    "Допустимые значения: FEW, NONE, ENOUGH";
         }
     }
 
     @Override
     public String getDescription() {
-        return "фильтровать элементы по полю transport";
+        return "filter_by_transport {FEW|NONE|ENOUGH} : вывести элементы с указанным транспортом";
     }
 }

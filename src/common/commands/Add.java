@@ -1,10 +1,9 @@
 package common.commands;
 
-import client.FlatBuilder;
 import common.models.Flat;
 import server.CollectionManager;
 
-import java.util.Scanner;
+import java.time.LocalDateTime;
 
 /**
  * Команда для добавления нового элемента в коллекцию
@@ -12,38 +11,34 @@ import java.util.Scanner;
 public class Add implements Command {
 
     private final CollectionManager collectionManager;
-    private final FlatBuilder flatBuilder;
 
-    /**
-     * Конструктор команды Add
-     * @param collectionManager менеджер коллекции
-     */
     public Add(CollectionManager collectionManager) {
         this.collectionManager = collectionManager;
-        this.flatBuilder = new FlatBuilder(new Scanner(System.in), collectionManager);
     }
 
-    /**
-     * Выполняет команду добавления нового элемента
-     */
     @Override
     public String execute(Object args) {
-        try {
-            System.out.println("\n=== Добавление новой квартиры ===");
-            Flat newFlat = flatBuilder.buildFlat();
-            collectionManager.addFlat(newFlat);
-            return "Новый объект Flat успешно добавлен в коллекцию. ID: " + newFlat.getId();
-        } catch (Exception e) {
-            return "Ошибка при добавлении элемента: " + e.getMessage();
+        if (!(args instanceof Flat)) {
+            return "Ошибка: объект Flat не передан.";
         }
+
+        Flat flat = (Flat) args;
+        flat.setId(generateUniqueId());
+        flat.setCreationDate(LocalDateTime.now());
+
+        collectionManager.addFlat(flat);
+        return "Квартира успешно добавлена в коллекцию. ID: " + flat.getId();
     }
 
-    /**
-     * Возвращает описание команды
-     * @return описание команды
-     */
     @Override
     public String getDescription() {
-        return " добавить новый объект Flat в коллекцию";
+        return "добавить новый объект Flat в коллекцию";
+    }
+
+    private int generateUniqueId() {
+        return collectionManager.getFlats().stream()
+                .mapToInt(Flat::getId)
+                .max()
+                .orElse(0) + 1;
     }
 }

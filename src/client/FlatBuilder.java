@@ -1,21 +1,16 @@
 package client;
 
-import server.CollectionManager;
 import common.models.*;
 
 import java.util.Scanner;
 
 public class FlatBuilder {
     private final Scanner scanner;
-    private final CollectionManager collectionManager;
 
-    // Конструктор теперь принимает и CollectionManager для проверки уникальности ID
-    public FlatBuilder(Scanner scanner, CollectionManager collectionManager) {
+    public FlatBuilder(Scanner scanner) {
         this.scanner = scanner;
-        this.collectionManager = collectionManager;
     }
 
-    // Метод для создания объекта Flat
     public Flat buildFlat() {
         System.out.println("Введите название квартиры:");
         String name = readNonEmptyString();
@@ -51,35 +46,25 @@ public class FlatBuilder {
             house = new House(houseName, houseYear, flatsOnFloor);
         }
 
-        int id = generateUniqueId();
-        java.time.LocalDateTime creationDate = java.time.LocalDateTime.now();
-
-        return new Flat(id, name, coordinates, creationDate, area, numberOfRooms, furnish, view, transport, house);
+        // ID и creationDate установит сервер
+        return new Flat(0, name, coordinates, null, area, numberOfRooms, furnish, view, transport, house);
     }
 
-    // Остальные методы остаются без изменений
+    // Методы чтения ввода — без изменений
     public String readNonEmptyString() {
-        String input;
         while (true) {
-            input = scanner.nextLine();
-            if (!input.isEmpty()) {
-                return input;
-            } else {
-                System.out.println("Поле не может быть пустым. Попробуйте снова:");
-            }
+            String input = scanner.nextLine();
+            if (!input.isEmpty()) return input;
+            System.out.println("Поле не может быть пустым. Попробуйте снова:");
         }
     }
 
     public double readDoubleGreaterThan(String minValue) {
-        double input;
         while (true) {
             try {
-                input = Double.parseDouble(scanner.nextLine());
-                if (input > Double.parseDouble(minValue)) {
-                    return input;
-                } else {
-                    System.out.println("Значение должно быть больше " + minValue + ". Попробуйте снова:");
-                }
+                double input = Double.parseDouble(scanner.nextLine());
+                if (input > Double.parseDouble(minValue)) return input;
+                System.out.println("Значение должно быть больше " + minValue + ". Попробуйте снова:");
             } catch (NumberFormatException e) {
                 System.out.println("Ошибка ввода. Попробуйте снова:");
             }
@@ -87,28 +72,22 @@ public class FlatBuilder {
     }
 
     public Long readLong(String prompt) {
-        Long input = null;
-        while (input == null) {
+        while (true) {
             System.out.println(prompt);
             try {
-                input = Long.parseLong(scanner.nextLine());
+                return Long.parseLong(scanner.nextLine());
             } catch (NumberFormatException e) {
                 System.out.println("Ошибка ввода. Попробуйте снова:");
             }
         }
-        return input;
     }
 
     public Long readLongGreaterThan(long minValue) {
-        long input;
         while (true) {
             try {
-                input = Long.parseLong(scanner.nextLine());
-                if (input > minValue) {
-                    return input;
-                } else {
-                    System.out.println("Значение должно быть больше " + minValue + ". Попробуйте снова:");
-                }
+                long input = Long.parseLong(scanner.nextLine());
+                if (input > minValue) return input;
+                System.out.println("Значение должно быть больше " + minValue + ". Попробуйте снова:");
             } catch (NumberFormatException e) {
                 System.out.println("Ошибка ввода. Попробуйте снова:");
             }
@@ -116,63 +95,39 @@ public class FlatBuilder {
     }
 
     public long readLongInRange(long minValue, long maxValue) {
-        long input;
         while (true) {
             try {
-                input = Long.parseLong(scanner.nextLine());
-                if (input >= minValue && input <= maxValue) {
-                    return input;
-                } else {
-                    System.out.println("Значение должно быть в диапазоне от " + minValue + " до " + maxValue + ". Попробуйте снова:");
-                }
+                long input = Long.parseLong(scanner.nextLine());
+                if (input >= minValue && input <= maxValue) return input;
+                System.out.println("Значение должно быть в диапазоне от " + minValue + " до " + maxValue + ". Попробуйте снова:");
             } catch (NumberFormatException e) {
-                System.out.println("Ошибка ввода. Попробуйте снова:");
+                System.out.println("Ошибка ввода.Попробуйте снова:");
             }
         }
     }
 
-    public  <T extends Enum<T>> T readEnum(Class<T> enumClass) {
-        T result = null;
-        while (result == null) {
+    public <T extends Enum<T>> T readEnum(Class<T> enumClass) {
+        while (true) {
             String input = scanner.nextLine().toUpperCase();
             try {
-                result = Enum.valueOf(enumClass, input);
+                return Enum.valueOf(enumClass, input);
             } catch (IllegalArgumentException e) {
-                System.out.println("Неверное значение. Пожалуйста, введите одно из допустимых значений:");
-                for (T enumConstant : enumClass.getEnumConstants()) {
-                    System.out.println(enumConstant.name());
+                System.out.println("Неверное значение. Возможные значения:");
+                for (T value : enumClass.getEnumConstants()) {
+                    System.out.println("- " + value.name());
                 }
             }
         }
-        return result;
     }
 
-    public  <T extends Enum<T>> T readOptionalEnum(Class<T> enumClass) {
-        T result = null;
+    public <T extends Enum<T>> T readOptionalEnum(Class<T> enumClass) {
         String input = scanner.nextLine().toUpperCase();
-        if (!input.isEmpty()) {
-            try {
-                result = Enum.valueOf(enumClass, input);
-            } catch (IllegalArgumentException e) {
-                System.out.println("Неверное значение для Transport. Попробуйте снова.");
-            }
+        if (input.isEmpty()) return null;
+        try {
+            return Enum.valueOf(enumClass, input);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Неверное значение. Возвращаю null.");
+            return null;
         }
-        return result;
-    }
-
-    // Новая реализация generateUniqueId
-    private int generateUniqueId() {
-        if (collectionManager.getFlats().isEmpty()) {
-            return 1;
-        }
-
-        // Находим максимальный ID в коллекции
-        int maxId = collectionManager.getFlats()
-                .stream()
-                .mapToInt(Flat::getId)
-                .max()
-                .orElse(0);
-
-        return maxId + 1;
     }
 }
